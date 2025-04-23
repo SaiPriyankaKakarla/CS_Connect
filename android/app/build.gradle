@@ -1,0 +1,45 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+// If you prefer the older “apply plugin:” style, that’s okay too,
+// but do NOT mix the new “plugins { }” block with an older “apply plugin” for the same plugin.
+// For Google Services, you still need:
+apply plugin: 'com.google.gms.google-services'
+
+android {
+    namespace = "com.example.cs_connect_app"
+    compileSdk = 35 // or flutter.compileSdkVersion if you prefer
+
+    defaultConfig {
+        applicationId = "com.example.cs_connect_app"
+        minSdk = 21 // or flutter.minSdkVersion
+        targetSdk = 35 // or flutter.targetSdkVersion
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    // Example buildTypes
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+apply plugin: 'com.google.gms.google-services'

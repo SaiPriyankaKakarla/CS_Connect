@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "69290627347",
+    "project_id": "cs-connect-f266f",
+    "storage_bucket": "cs-connect-f266f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69290627347:android:e7ae2bd722b40a52c58ae6",
+        "android_client_info": {
+          "package_name": "com.example.cs_connect_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbTcQ-AuXH3i9iclADkKPMaZw6q5rhExI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

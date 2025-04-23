@@ -1,0 +1,38 @@
+buildscript {
+    // You must also specify repositories for the buildscript itself
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        // Match your Android Gradle Plugin version to what you use in settings.gradle or in app/build.gradle
+        classpath 'com.android.tools.build:gradle:8.2.1'
+
+        // Google services plugin
+        classpath 'com.google.gms:google-services:4.3.15'
+
+        // Kotlin Gradle plugin (if needed)
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// Keep the rest of your existing config (buildDir, subprojects, etc.)
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
