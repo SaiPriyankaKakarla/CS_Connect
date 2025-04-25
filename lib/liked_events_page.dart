@@ -3,132 +3,104 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'event_detail_page.dart';
 
-class LikedEventsPage extends StatefulWidget {
-  const LikedEventsPage({Key? key}) : super(key: key);
-
-  @override
-  State<LikedEventsPage> createState() => _LikedEventsPageState();
-}
-
-class _LikedEventsPageState extends State<LikedEventsPage> {
-  List<Map<String, dynamic>> likedEvents = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-
-    FirebaseAuth.instance.authStateChanges().listen((user) {
-      if (user != null) {
-        print("User is logged in: ${user.uid}");
-        fetchLikedEvents(user);
-      } else {
-        print("User not logged in");
-        setState(() => isLoading = false);
-      }
-    });
-  }
-
-  Future<void> fetchLikedEvents(User user) async {
-    try {
-      print('Fetching liked events for UID: ${user.uid}');
-      final likedSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('liked_events')
-          .get();
-
-      print('Liked IDs: ${likedSnapshot.docs.map((d) => d.id).toList()}');
-
-      final List<Map<String, dynamic>> events = [];
-
-      for (String eventId in likedSnapshot.docs.map((d) => d.id)) {
-        final doc = await FirebaseFirestore.instance
-            .collection('events')
-            .doc(eventId)
-            .get();
-
-        print('Checking event ID: $eventId | Exists: ${doc.exists}');
-
-        if (doc.exists) {
-          final data = doc.data()!;
-          data['id'] = doc.id;
-          events.add(data);
-        }
-      }
-
-      setState(() {
-        likedEvents = events;
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching liked events: $e');
-      setState(() => isLoading = false);
-    }
-  }
+class LikedEventsPage extends StatelessWidget {
+  const LikedEventsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Liked Events'),
-        backgroundColor: const Color(0xFF7A5EF7),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : likedEvents.isEmpty
-              ? const Center(child: Text('No liked events found.'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: likedEvents.length,
-                  itemBuilder: (context, index) {
-                    final event = likedEvents[index];
-                    return Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(14),
-                        title: Text(
-                          event['title'] ?? 'No Title',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (ctx, authSnap) {
+        if (authSnap.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final user = authSnap.data;
+        if (user == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Liked Events')),
+            body:
+                const Center(child: Text('Please sign in to see your likes.')),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(title: const Text('Liked Events')),
+          body: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .collection('liked_events')
+                .orderBy('likedAt', descending: true)
+                .snapshots(),
+            builder: (ctx2, likeSnap) {
+              if (likeSnap.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final likedDocs = likeSnap.data!.docs;
+              if (likedDocs.isEmpty) {
+                return const Center(child: Text('No liked events found.'));
+              }
+              final ids = likedDocs.map((d) => d.id).toList();
+
+              return FutureBuilder<QuerySnapshot>(
+                future: FirebaseFirestore.instance
+                    .collection('events')
+                    .where(FieldPath.documentId, whereIn: ids)
+                    .get(),
+                builder: (ctx3, eventsSnap) {
+                  if (eventsSnap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final events = eventsSnap.data!.docs.map((d) {
+                    final m = d.data()! as Map<String, dynamic>;
+                    m['id'] = d.id;
+                    return m;
+                  }).toList();
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: events.length,
+                    itemBuilder: (ctx4, i) {
+                      final e = events[i];
+                      return Card(
+                        elevation: 4,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(14),
+                          title: Text(e['title'] ?? '',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              Text('📍 ${e['address'] ?? ''}'),
+                              Text(
+                                  '📅 ${e['date'] ?? ''}    🕒 ${e['time'] ?? ''}'),
+                              const SizedBox(height: 6),
+                              Text(e['shortDescription'] ?? ''),
+                            ],
                           ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-                            Text('📍 ${event['address'] ?? 'No Address'}'),
-                            Text(
-                                '📅 ${event['date'] ?? 'No Date'}    🕒 ${event['time'] ?? 'No Time'}'),
-                            const SizedBox(height: 6),
-                            Text(event['shortDescription'] ??
-                                'No description available.'),
-                          ],
-                        ),
-                        onTap: () async {
-                          final shouldRefresh = await Navigator.push(
+                          onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  EventDetailPage(eventData: event),
-                            ),
-                          );
-                          if (shouldRefresh == true) {
-                            final user = FirebaseAuth.instance.currentUser;
-                            if (user != null) {
-                              fetchLikedEvents(user);
-                            }
-                          }
-                        },
-                      ),
-                    );
-                  },
-                ),
+                                builder: (_) =>
+                                    EventDetailPage(eventData: e)),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
