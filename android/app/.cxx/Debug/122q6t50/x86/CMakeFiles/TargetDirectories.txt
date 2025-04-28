@@ -1,0 +1,2 @@
+C:/Users/skakarla1/Desktop/cs_connect_app - Copy-new/android/app/.cxx/Debug/122q6t50/x86/CMakeFiles/edit_cache.dir
+C:/Users/skakarla1/Desktop/cs_connect_app - Copy-new/android/app/.cxx/Debug/122q6t50/x86/CMakeFiles/rebuild_cache.dir
